@@ -27,7 +27,7 @@
   }
 
   var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
-
+ 
   function createCommonjsModule(fn, module) {
   	return module = { exports: {} }, fn(module, module.exports), module.exports;
   }
@@ -188,6 +188,7 @@
         ctx.moveTo(0, 0);
         ctx.beginPath();
         var color = this.ctrl.color.replace(/rgb\(/g, '').replace(/\)/g, '');
+        
         ctx.strokeStyle = "rgba(".concat(color, ",").concat(this.definition.opacity, ")");
         ctx.lineWidth = this.definition.lineWidth; // Cycle the graph from -X to +X every PX_DEPTH and draw the line
 
@@ -384,8 +385,33 @@
           }
 
           ctx.closePath();
-          ctx.fillStyle = "rgba(".concat(this.definition.color, ", 1)");
-          ctx.strokeStyle = "rgba(".concat(this.definition.color, ", 1)");
+
+          //console.log(this.definition.color);
+          var grd, color;
+          if(this.definition.color == 1){
+            color = [48,22,155];
+            grd = ctx.createLinearGradient(0, 200, 200, 0);
+            grd.addColorStop(0, "#EBE718");
+            grd.addColorStop(1, "#3351FF");
+          }
+          if(this.definition.color == 2){
+            color = [48,22,155];
+            grd = ctx.createLinearGradient(200, 0, 0, 200);
+            grd.addColorStop(0, "#00FFB6");
+            grd.addColorStop(1, "#FF3251");
+          }
+          if(this.definition.color == 3){
+            color = [48,22,155];
+            grd = ctx.createLinearGradient(200, 0, 0, 200);
+            grd.addColorStop(0, "#00FFB6");
+            grd.addColorStop(1, "#EBE718");
+          }
+          
+
+          ctx.fillStyle = grd;//"rgba(".concat(grd, ", 1)");
+
+          //ctx.fillStyle = "rgba(".concat(this.definition.color, ", 1)");
+          ctx.strokeStyle = "rgba(".concat(color, ", 3)");
           ctx.fill();
         }
 
@@ -404,13 +430,13 @@
           supportLine: true
         }, {
           // blue
-          color: '50, 30, 50'
+          color: 1
         }, {
           // red
-          color: '10, 57, 76'
+          color: 2
         }, {
           // green
-          color: '48, 220, 155'
+          color: 3
         }], waveColors);
       }
     }]);

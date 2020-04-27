@@ -7,18 +7,19 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-
-    <title>Hello, world!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap" rel="stylesheet">
+    <title>Startco Sound</title>
     <style type="text/css">
       
       body{
         background: #000;
+        font-family: 'Ubuntu Mono', monospace;
       }
       #wrapper{
         width: 400px;
         height: 400px;
         border-radius: 50%;
-        border: solid 1px rgba(255,255,255,0.2);
+        border: solid 0.5px rgba(255,255,255,0.1);
         overflow: hidden;
         position: relative;
       }
@@ -26,6 +27,18 @@
         position: absolute;
         margin-left: -200px;
         margin-top: -200px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 800px;
+        height: 800px;
+      }
+      #siri-container span{
+        cursor: pointer;
+      }
+      #ai{
+        display: none;
       }
     </style>
   </head>
@@ -36,8 +49,10 @@
       <div class="d-flex flex-row justify-content-center align-items-center" style="height: 100vh;">
           <di1v class="p-2">
             <div id="wrapper">
-              <div id="siri-container"></div>
-
+              <div id="siri-container">
+                <span id="mic">Aceptar mic</span>
+                <span id="ai">Iniciar ai</span>
+              </div>
             </div>
           </div>
       </div>
@@ -49,57 +64,107 @@
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 
+      
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.2.6/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.0.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.0.0/addons/p5.sound.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+
+
 
     <script src="wave.js"></script>
 
 
     <script type="text/javascript">
-      var mic;
 
 
-      var siriWave = new SiriWave({
-        container: document.getElementById('siri-container'),
-        width: 800,
-        height: 800,
-        style: 'ios9',
-        cover: false,
-        autostart: false,
-        lerpSpeed: 0.4,
-        pixelDepth: 0.1,
-        amplitude: 2,
-        speed:  0.2
-      });
+
+
+      var mic, siriWave;
+      
+      
+      
+
+
+      var obj = {level:0, init: false};
+      
+      const FRAMES_PER_SECOND = 30;  // Valid values are 60,30,20,15,10...
+      // set the mim time to render the next frame
+      const FRAME_MIN_TIME = (1000/60) * (60 / FRAMES_PER_SECOND) - (1000/60) * 0.5;
+      var lastFrameTime = 0;  // the last frame time
+      function update(time){
+        
+          if(time-lastFrameTime < FRAME_MIN_TIME){ //skip the frame if the call is too early
+              requestAnimationFrame(update);
+              return; // return as there is nothing to do
+          }
+          var ampt = 0;
+          if(obj.init){
+            ampt =  mic.getLevel() * 35;
+            console.log(mic.getLevel())
+          }
+          
+          ampt = (ampt > 2) ? 2 : ampt;  
+          TweenLite.to(obj, 1, {level:ampt, ease:Elastic.easeOut, onUpdate:drawCanvas});
+          
+          function drawCanvas() {
+            //console.log("ampt is now " + obj.level);
+            //console.log(ampt);
+            siriWave.setAmplitude(obj.level);
+            //siriWave.setAmplitude(2);
+          }
+
+          lastFrameTime = time; // remember the time of the rendered frame
+          // render the frame
+          requestAnimationFrame(update); // get next farme
+      }
+
+
+      window.onload = function() {
+        
+        
+      };
 
       $(document).ready(function(){
-        $('#wrapper').click(function(){
-
-          mic = new p5.AudioIn();
-        
-
-          requestAnimationFrame(repeatOften);
-          siriWave.start();
-          siriWave.setAmplitude(0);
+        $('#siri-container #mic').click(function(){
+          $(this).hide();
+          $('#ai').show();
+          getAudioContext().resume();
           mic.start();
-
-
+          
         });
+        $('#siri-container #ai').click(function(){
+          siriWave = new SiriWave({
+            container: document.getElementById('siri-container'),
+            width: 800,
+            height: 800,
+            style: 'ios9',
+            cover: false,
+            autostart: true,
+            lerpSpeed: 0.4,
+            pixelDepth: 0.1,
+            amplitude: 0.1,
+            speed:  0.1
+            });
+            //var gui = new dat.GUI();
+            //gui.add(siriWave, "speed", 0, 1);
+            
+            requestAnimationFrame(update);
+            obj.init= true;
 
-      });
-      
+        })
+      })
 
-
-      function repeatOften() {
-
-        var ampt =  mic.getLevel() * 1;
-        siriWave.setAmplitude(ampt);
-        requestAnimationFrame(repeatOften);
-
-
+      function setup() {
+          mic = new p5.AudioIn();
+         
+          //requestAnimationFrame(update);
       }
-      
-      
+
+      function linear(time, begin, change, duration) {
+        return change * time / duration + begin;
+      }
 
     </script>
 
